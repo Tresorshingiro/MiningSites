@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import WorkspaceSidebar from './WorkspaceSidebar'
 import { AuthProvider } from '../auth/AuthContext'
 import { modules, portal } from '../data/config'
+import { brand } from '../lib/brand'
 
 // The sidebar now carries the account block in its foot, so it needs the auth
 // provider standing behind it. The provider's session probe fails harmlessly
@@ -25,10 +26,6 @@ const renderAt = (path = '/') =>
 const group = (mod) => within(screen.getByRole('region', { name: mod.name }))
 const row = (mod, solution) => group(mod).getByRole('link', { name: solution.name })
 
-// Mirrors the component: a portal whose only module is the portal itself shows
-// no module header, because the brand above it already carries that name.
-const soleModule = modules.length === 1 && modules[0].name === portal.name
-
 describe('WorkspaceSidebar', () => {
   it('publishes only solutions that have an embedUrl', () => {
     expect(modules.length).toBeGreaterThan(0)
@@ -42,30 +39,25 @@ describe('WorkspaceSidebar', () => {
     }
   })
 
-  it('heads the list for what it lists and names each category by its full catalog name', () => {
+  it('carries the brand badge and portal name, and names each module region in full', () => {
     renderAt()
-    const heading = soleModule ? 'Solutions' : 'Modules'
-    expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Modules' })
+    expect(nav.querySelector('.sidebar__badge svg')).toBeTruthy()
+    expect(nav.querySelector('.sidebar__name')).toHaveTextContent(portal.name)
     for (const mod of modules) {
       expect(screen.getByRole('region', { name: mod.name })).toBeInTheDocument()
     }
   })
 
-  it('counts solutions with the singular/plural rule, wherever a module is headed', () => {
+  it('does not repeat the portal name as a heading under the brand', () => {
     renderAt()
-    for (const mod of modules) {
-      const n = mod.solutions.length
-      const label = `${n} ${n === 1 ? 'solution' : 'solutions'}`
-      if (soleModule) {
-        // The header is one block carrying both the title and the count, so the
-        // count's absence is the header's absence. Asserting on the title
-        // instead would be ambiguous: in Water Resources the module and its
-        // first application are the same words, and the row still renders them.
-        expect(group(mod).queryByText(label)).not.toBeInTheDocument()
-      } else {
-        expect(group(mod).getByText(label)).toBeInTheDocument()
-      }
-    }
+    const nav = screen.getByRole('navigation', { name: 'Modules' })
+    expect(within(nav).getAllByText(portal.name)).toHaveLength(1)
+  })
+
+  it('shows no solution counts, since every row is already on screen', () => {
+    renderAt()
+    expect(screen.queryByText(/^\d+ solutions?$/)).not.toBeInTheDocument()
   })
 
   it('shows every solution without any disclosure to open', () => {
@@ -106,16 +98,17 @@ describe('WorkspaceSidebar', () => {
     }
   })
 
-  it('carries each module accent down to its group', () => {
+  it('colours the whole sidebar with the same brand as the login', () => {
     renderAt()
-    for (const mod of modules) {
-      const region = screen.getByRole('region', { name: mod.name })
-      expect(region).toHaveStyle({
-        '--accent': mod.accent,
-        '--accent-text': mod.accentText,
-        '--accent-dark': mod.accentDark,
-      })
-    }
+    expect(screen.getByRole('navigation', { name: 'Modules' })).toHaveStyle({
+      '--brand-accent': brand.accent,
+      '--brand-tint': brand.tint,
+    })
+  })
+
+  it('ends with a Logout button', () => {
+    renderAt()
+    expect(screen.getByRole('button', { name: 'Logout' })).toBeInTheDocument()
   })
 
   it('takes both accents straight from the guarded catalog', async () => {

@@ -59,6 +59,12 @@ const PATHS = {
     </>
   ),
   arrowLeft: <path d="M19 12H5m6-7-7 7 7 7" />,
+  logout: (
+    <>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 17l-5-5 5-5M5 12h11" />
+    </>
+  ),
 }
 
 export default function IconMark({ name, size = 16, className = '', title }) {

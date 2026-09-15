@@ -10,7 +10,6 @@ export const manifest = {
   ],
   "mining-hero": [
     640,
-    1280,
-    1920
+    1280
   ]
 }
